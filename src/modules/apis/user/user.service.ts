@@ -29,7 +29,9 @@ import { DtoUpdateMyProfileBody } from 'src/modules/apis/user/dto/update-my-prof
 import { DtoAddCoursesToUserBody } from 'src/modules/apis/user/dto/add-courses-to-user.dto';
 import { CourseRepository } from 'src/modules/repositories/course.repository';
 import { UserExerciseService } from 'src/modules/apis/userExercise/userExercise.service';
+import { UserLessonService } from 'src/modules/apis/userLesson/userLesson.service';
 import { ExerciseRepository } from 'src/modules/repositories/exercise.repository';
+import { LessonRepository } from 'src/modules/repositories/lesson.repository';
 
 @Injectable()
 export class UserService {
@@ -37,7 +39,9 @@ export class UserService {
     private readonly userRepository: UserRepository,
     private readonly courseRepository: CourseRepository,
     private readonly exerciseRepository: ExerciseRepository,
+    private readonly lessonRepository: LessonRepository,
     private readonly userExerciseService: UserExerciseService,
+    private readonly userLessonService: UserLessonService,
   ) {
     this._dataDefault();
   }
@@ -430,6 +434,22 @@ export class UserService {
           };
 
           await this.userExerciseService.createUserExercise(body);
+        }
+
+        const courseLessons = await this.lessonRepository
+          .createQueryBuilder('lesson')
+          .select(['lesson.id'])
+          .where('lesson.course = :courseId', { courseId: coursesEntity.id })
+          .andWhere('lesson.status = :status', {
+            status: ELessonStatus.PUBLIC,
+          })
+          .getMany();
+
+        for await (const lesson of courseLessons) {
+          await this.userLessonService.createUserLesson({
+            user: data?.id,
+            lesson: lesson.id,
+          });
         }
       }
     } else {

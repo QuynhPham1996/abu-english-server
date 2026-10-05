@@ -8,8 +8,13 @@ export class DtoCreateLessonBody {
   @IsEnum(ELessonType)
   type: ELessonType;
 
+  @IsOptional()
   @IsUUID()
-  exercise: string;
+  exercise?: string;
+
+  @IsOptional()
+  @IsUUID()
+  course?: string;
 
   @IsEnum(ELessonArrange)
   arrange: ELessonArrange;

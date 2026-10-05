@@ -25,8 +25,9 @@ export class DtoCreateTestBody {
   @IsUUID()
   userLesson: string;
 
+  @IsOptional()
   @IsUUID()
-  userExercise: string;
+  userExercise?: string;
 
   @IsNumber()
   duration: number;

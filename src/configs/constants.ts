@@ -1,6 +1,11 @@
+import { existsSync } from 'fs';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { config } from 'dotenv';
+
 config();
+if (existsSync('.env.prod')) {
+  config({ path: '.env.prod', override: false });
+}
 
 export const env = {
   rootUrl: process.env.ROOT_URL,

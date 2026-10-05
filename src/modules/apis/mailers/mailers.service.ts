@@ -9,27 +9,35 @@ export class MailersService {
   constructor(private readonly mailersService: MailerService) {}
 
   async sendMailNotificationMessage(body: DtoSendMailNotificationMessageBody) {
-    this.mailersService.sendMail({
-      to: body.emails,
-      subject: 'Abu English Club Thông Báo',
-      context: {
-        message: body.message,
-        buttonLink: body.buttonLink,
-      },
-      template: 'send-mail-notification',
-    });
+    try {
+      await this.mailersService.sendMail({
+        to: body.emails,
+        subject: 'Abu English Club Thông Báo',
+        context: {
+          message: body.message,
+          buttonLink: body.buttonLink,
+        },
+        template: 'send-mail-notification',
+      });
+    } catch (error) {
+      console.error('Gửi email thông báo thất bại', error);
+    }
   }
 
   async sendMailContact(body: DtoSendMailContactBody) {
-    this.mailersService.sendMail({
-      to: body.emails,
-      subject: 'Abu English Club Thông Báo',
-      context: {
-        name: body?.name,
-        phoneNumber: body?.phoneNumber,
-        message: body?.message,
-      },
-      template: 'send-mail-contact',
-    });
+    try {
+      await this.mailersService.sendMail({
+        to: body.emails,
+        subject: 'Abu English Club Thông Báo',
+        context: {
+          name: body?.name,
+          phoneNumber: body?.phoneNumber,
+          message: body?.message,
+        },
+        template: 'send-mail-contact',
+      });
+    } catch (error) {
+      console.error('Gửi email liên hệ thất bại', error);
+    }
   }
 }

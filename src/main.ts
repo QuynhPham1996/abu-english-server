@@ -6,6 +6,14 @@ import * as bodyParser from 'body-parser';
 import { appConfig, env } from 'src/configs/constants';
 import { AppModule } from 'src/app.module';
 
+process.on('uncaughtException', (error) => {
+  console.error(error);
+});
+
+process.on('unhandledRejection', (error) => {
+  console.error(error);
+});
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const { port } = appConfig;
@@ -28,7 +36,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(port);
-  console.log(`App is listening on port ${port}`);
+  await app.listen(port || 8000, '0.0.0.0');
+  console.log(`App is listening on port ${port || 8000}`);
 }
 bootstrap();

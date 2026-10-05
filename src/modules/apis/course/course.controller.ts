@@ -21,6 +21,7 @@ import { DtoCreateCourseBody } from 'src/modules/apis/course/dto/create-course.d
 import { DtoDeleteCoursesQuery } from 'src/modules/apis/course/dto/delete-courses.dto';
 import { DtoGetCoursesQuery } from 'src/modules/apis/course/dto/get-courses.dto';
 import { DtoUpdateCourseBody } from 'src/modules/apis/course/dto/update-course.dto';
+import { DtoAttachAssignmentsBody } from 'src/modules/apis/exercise/dto/attach-assignments.dto';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('courses')
@@ -90,6 +91,19 @@ export class CourseController {
   @AllowPermission([EUserRole.STUDENT])
   async updateIsPassExercise(@Param('id') id: string) {
     return await this.courseService.updateIsPassExercise(id);
+  }
+
+  @Get(':id/assignments')
+  async getCourseAssignments(@Param('id') id: string) {
+    return await this.courseService.getCourseAssignments(id);
+  }
+
+  @Post(':id/assignments')
+  async attachCourseAssignments(
+    @Param('id') id: string,
+    @Body() body: DtoAttachAssignmentsBody,
+  ) {
+    return await this.courseService.attachCourseAssignments(id, body);
   }
 
   @Get('my-courses/lesson/:id')

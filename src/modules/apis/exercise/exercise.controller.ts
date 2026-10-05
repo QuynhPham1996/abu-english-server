@@ -19,6 +19,7 @@ import { DtoCreateExerciseBody } from 'src/modules/apis/exercise/dto/create-exer
 import { DtoDeleteExercisesQuery } from 'src/modules/apis/exercise/dto/delete-exercises.dto';
 import { DtoGetExercisesQuery } from 'src/modules/apis/exercise/dto/get-exercises.dto';
 import { DtoUpdateExerciseBody } from 'src/modules/apis/exercise/dto/update-exercise.dto';
+import { DtoAttachAssignmentsBody } from 'src/modules/apis/exercise/dto/attach-assignments.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { multerUploadVideoOptions } from 'src/modules/constants/upload';
 
@@ -43,6 +44,14 @@ export class ExerciseController {
   @Post()
   async createExercise(@Body() body: DtoCreateExerciseBody) {
     return await this.exerciseService.createExercise(body);
+  }
+
+  @Post(':id/assignments')
+  async attachAssignments(
+    @Param('id') id: string,
+    @Body() body: DtoAttachAssignmentsBody,
+  ) {
+    return await this.exerciseService.attachAssignments(id, body);
   }
 
   @Post(':id')

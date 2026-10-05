@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { DtoUserToken } from 'src/auth/dto/token-decode.dto';
 import {
+  ELessonStatus,
   ELessonType,
   ENotificationType,
   ETestStatus,
@@ -42,6 +43,7 @@ export class TestService {
       .leftJoin('test.lesson', 'lesson')
       .leftJoin('lesson.exercise', 'exercise')
       .leftJoin('exercise.course', 'course')
+      .leftJoin('lesson.course', 'lessonCourse')
       .leftJoin('test.userLesson', 'userLesson')
       .leftJoin('test.userExercise', 'userExercise')
       .select([
@@ -58,6 +60,8 @@ export class TestService {
         'exercise.name',
         'course.id',
         'course.name',
+        'lessonCourse.id',
+        'lessonCourse.name',
         'userLesson.id',
         'userExercise.id',
       ])
@@ -80,32 +84,65 @@ export class TestService {
 
     const dataPaginate = await commonPagination(params, qb);
 
-    const testsSuccess = await this.testRepository
+    const attempts = await this.testRepository
       .createQueryBuilder('test')
-      .select(['test.id', 'test.result'])
+      .leftJoin('test.lesson', 'lesson')
+      .select(['test.id', 'test.result', 'lesson.id', 'lesson.name'])
       .where('test.user = :userId', { userId: user?.id })
-      .andWhere('test.status = :status', { status: ETestStatus.SUCCESS })
       .getMany();
 
-    const arrayResults = testsSuccess?.map((test) => test.result);
-
-    const averageScore =
-      arrayResults.reduce((a, b) => a + b, 0) / arrayResults.length;
+    const totalAttempts = attempts.length;
+    const totalScore = attempts.reduce(
+      (sum, item) => sum + (Number(item.result) || 0),
+      0,
+    );
+    const averageScore = totalAttempts > 0 ? totalScore / totalAttempts : 0;
 
     const userLessons = await this.userLessonRepository
       .createQueryBuilder('userLesson')
-      .select(['userLesson.id', 'userLesson.isPass'])
+      .leftJoin('userLesson.lesson', 'lesson')
+      .leftJoin('lesson.exercise', 'exercise')
+      .select([
+        'userLesson.id',
+        'lesson.id',
+        'lesson.name',
+        'exercise.id',
+      ])
       .where('userLesson.user = :userId', { userId: user?.id })
+      .andWhere('lesson.status = :status', { status: ELessonStatus.PUBLIC })
       .getMany();
 
-    const passUserLessons = userLessons.filter(
-      (userLesson) => userLesson.isPass,
-    ).length;
+    const exerciseLessons = userLessons.filter(
+      (item) => (item.lesson as any)?.exercise?.id,
+    );
+    const exerciseNames = new Set(
+      exerciseLessons
+        .map((item) => (item.lesson as any)?.name)
+        .filter((name) => !!name),
+    );
+    const requiredLessons = [
+      ...exerciseLessons,
+      ...userLessons.filter((item) => {
+        const lesson = item.lesson as any;
+        return !lesson?.exercise?.id && !exerciseNames.has(lesson?.name);
+      }),
+    ];
+    const attemptedIds = new Set(
+      attempts.map((item) => (item.lesson as any)?.id).filter((id) => !!id),
+    );
+    const attemptedNames = new Set(
+      attempts.map((item) => (item.lesson as any)?.name).filter((name) => !!name),
+    );
+    const passUserLessons = requiredLessons.filter((item) => {
+      const lesson = item.lesson as any;
+      return attemptedIds.has(lesson?.id) || attemptedNames.has(lesson?.name);
+    }).length;
 
     return {
       ...dataPaginate,
       averageScore,
-      totalUserLessons: userLessons.length,
+      totalAttempts,
+      totalUserLessons: requiredLessons.length,
       passUserLessons,
     };
   }
@@ -173,6 +210,8 @@ export class TestService {
       .leftJoin('lesson.exercise', 'exercise')
       .leftJoin('exercise.course', 'course')
       .leftJoin('course.manager', 'manager')
+      .leftJoin('lesson.course', 'lessonCourse')
+      .leftJoin('lessonCourse.manager', 'lessonManager')
       .select([
         'test.id',
         'test.result',
@@ -187,12 +226,16 @@ export class TestService {
         'exercise.name',
         'course.id',
         'course.name',
+        'lessonCourse.id',
+        'lessonCourse.name',
         'user.id',
         'user.name',
         'user.username',
         'user.avatar',
         'manager.id',
         'manager.name',
+        'lessonManager.id',
+        'lessonManager.name',
       ]);
 
     if (params.search) {
@@ -209,6 +252,9 @@ export class TestService {
               search: `%${params.search}%`,
             })
             .orWhere('course.name LIKE :search', {
+              search: `%${params.search}%`,
+            })
+            .orWhere('lessonCourse.name LIKE :search', {
               search: `%${params.search}%`,
             });
         }),
@@ -243,6 +289,45 @@ export class TestService {
     }
 
     const data = await commonPagination(params, qb);
+    const rows = data?.data || [];
+    const missingExercise = rows.filter(
+      (item) => !(item.lesson as any)?.exercise?.id && (item.lesson as any)?.course?.id,
+    );
+
+    if (missingExercise.length) {
+      const names = [
+        ...new Set(
+          missingExercise
+            .map((item) => (item.lesson as any)?.name)
+            .filter((name) => !!name),
+        ),
+      ];
+      const courseIds = [
+        ...new Set(
+          missingExercise
+            .map((item) => (item.lesson as any)?.course?.id)
+            .filter((id) => !!id),
+        ),
+      ];
+      const siblings = await this.lessonRepository
+        .createQueryBuilder('lesson')
+        .leftJoin('lesson.exercise', 'exercise')
+        .leftJoin('exercise.course', 'course')
+        .select(['lesson.id', 'lesson.name', 'exercise.id', 'exercise.name', 'course.id'])
+        .where('lesson.name IN (:...names)', { names })
+        .andWhere('course.id IN (:...courseIds)', { courseIds })
+        .getMany();
+
+      missingExercise.forEach((item) => {
+        const lesson = item.lesson as any;
+        const match = siblings.find(
+          (sibling) =>
+            sibling.name === lesson?.name &&
+            (sibling.exercise as any)?.course?.id === lesson?.course?.id,
+        );
+        if (match?.exercise) lesson.exercise = match.exercise;
+      });
+    }
 
     return data;
   }

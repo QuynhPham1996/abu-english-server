@@ -17,6 +17,8 @@ import { DtoCreateLessonBody } from 'src/modules/apis/lesson/dto/create-lesson.d
 import { DtoDeleteLessonsQuery } from 'src/modules/apis/lesson/dto/delete-lessons.dto';
 import { DtoUpdateLessonBody } from 'src/modules/apis/lesson/dto/update-lesson.dto';
 import { DtoUpdateLessonQuestionsIndexBody } from 'src/modules/apis/lesson/dto/update-lesson-questions-index.dto';
+import { DtoAddLessonQuestionsBody } from 'src/modules/apis/lesson/dto/add-lesson-questions.dto';
+import { DtoAddLessonGroupBody } from 'src/modules/apis/lesson/dto/add-lesson-group.dto';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('lessons')
@@ -31,6 +33,19 @@ export class LessonController {
   @Post()
   async createLesson(@Body() body: DtoCreateLessonBody) {
     return await this.lessonService.createLesson(body);
+  }
+
+  @Post(':id/questions')
+  async addQuestions(
+    @Param('id') id: string,
+    @Body() body: DtoAddLessonQuestionsBody,
+  ) {
+    return await this.lessonService.addQuestions(id, body);
+  }
+
+  @Post(':id/groups')
+  async addGroup(@Param('id') id: string, @Body() body: DtoAddLessonGroupBody) {
+    return await this.lessonService.addGroup(id, body);
   }
 
   @Patch(':id')

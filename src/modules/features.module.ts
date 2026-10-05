@@ -15,6 +15,9 @@ import { ExerciseController } from 'src/modules/apis/exercise/exercise.controlle
 import { LessonController } from 'src/modules/apis/lesson/lesson.controller';
 import { QuestionController } from 'src/modules/apis/question/question.controller';
 import { TestController } from 'src/modules/apis/test/test.controller';
+import { QuestionGroupController } from 'src/modules/apis/questionGroup/questionGroup.controller';
+import { QuestionBankController } from 'src/modules/apis/questionBank/questionBank.controller';
+import { AssignmentController } from 'src/modules/apis/assignment/assignment.controller';
 
 import { AuthService } from 'src/auth/auth.service';
 import { UploadService } from 'src/modules/apis/upload/upload.service';
@@ -30,6 +33,9 @@ import { QuestionService } from 'src/modules/apis/question/question.service';
 import { UserExerciseService } from 'src/modules/apis/userExercise/userExercise.service';
 import { UserLessonService } from 'src/modules/apis/userLesson/userLesson.service';
 import { TestService } from 'src/modules/apis/test/test.service';
+import { QuestionGroupService } from 'src/modules/apis/questionGroup/questionGroup.service';
+import { QuestionBankService } from 'src/modules/apis/questionBank/questionBank.service';
+import { AssignmentService } from 'src/modules/apis/assignment/assignment.service';
 
 import { UserEntity } from 'src/modules/entities/user.entity';
 import { NotificationEntity } from 'src/modules/entities/notification.entity';
@@ -40,6 +46,8 @@ import { QuestionEntity } from 'src/modules/entities/question.entity';
 import { UserExerciseEntity } from 'src/modules/entities/userExercise.entity';
 import { UserLessonEntity } from 'src/modules/entities/userLesson.entity';
 import { TestEntity } from 'src/modules/entities/test.entity';
+import { QuestionGroupEntity } from 'src/modules/entities/questionGroup.entity';
+import { AssignmentEntity } from 'src/modules/entities/assignment.entity';
 
 import { UserRepository } from 'src/modules/repositories/user.repository';
 import { NotificationRepository } from 'src/modules/repositories/notification.repository';
@@ -50,6 +58,8 @@ import { QuestionRepository } from 'src/modules/repositories/question.repository
 import { UserExerciseRepository } from 'src/modules/repositories/userExercise.repository';
 import { UserLessonRepository } from 'src/modules/repositories/userLesson.repository';
 import { TestRepository } from 'src/modules/repositories/test.repository';
+import { QuestionGroupRepository } from 'src/modules/repositories/questionGroup.repository';
+import { AssignmentRepository } from 'src/modules/repositories/assignment.repository';
 
 @Module({
   imports: [
@@ -69,6 +79,8 @@ import { TestRepository } from 'src/modules/repositories/test.repository';
       UserExerciseEntity,
       UserLessonEntity,
       TestEntity,
+      QuestionGroupEntity,
+      AssignmentEntity,
     ]),
   ],
   controllers: [
@@ -82,6 +94,9 @@ import { TestRepository } from 'src/modules/repositories/test.repository';
     LessonController,
     QuestionController,
     TestController,
+    QuestionGroupController,
+    QuestionBankController,
+    AssignmentController,
   ],
   providers: [
     AuthService,
@@ -115,6 +130,14 @@ import { TestRepository } from 'src/modules/repositories/test.repository';
 
     TestRepository,
     TestService,
+
+    QuestionGroupRepository,
+    QuestionGroupService,
+
+    QuestionBankService,
+
+    AssignmentRepository,
+    AssignmentService,
   ],
   exports: [UserService],
 })

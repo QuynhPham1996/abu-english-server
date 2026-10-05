@@ -62,6 +62,7 @@ export class TestEntity extends BaseEntity {
   userLesson: string;
 
   @ManyToOne(() => UserExerciseEntity, (userExercise) => userExercise.id, {
+    nullable: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'userExercise' })

@@ -1,4 +1,6 @@
 import { ELessonType, ELessonArrange, ELessonStatus } from 'src/common/enums';
+import { AssignmentEntity } from 'src/modules/entities/assignment.entity';
+import { CourseEntity } from 'src/modules/entities/course.entity';
 import { ExerciseEntity } from 'src/modules/entities/exercise.entity';
 import { QuestionEntity } from 'src/modules/entities/question.entity';
 import { UserLessonEntity } from 'src/modules/entities/userLesson.entity';
@@ -46,6 +48,9 @@ export class LessonEntity extends BaseEntity {
   })
   status: ELessonStatus;
 
+  @Column({ nullable: true, default: 0 })
+  index: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: string;
 
@@ -58,6 +63,18 @@ export class LessonEntity extends BaseEntity {
   })
   @JoinColumn({ name: 'exercise' })
   exercise: string;
+
+  @Column('uuid', { nullable: true })
+  @ManyToOne(() => CourseEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'course' })
+  course: string;
+
+  @Column('uuid', { nullable: true })
+  @ManyToOne(() => AssignmentEntity, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'sourceAssignment' })
+  sourceAssignment: string;
 
   @OneToMany(() => QuestionEntity, (question) => question.lesson, {
     onDelete: 'CASCADE',

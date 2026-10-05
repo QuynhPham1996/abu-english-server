@@ -3,11 +3,14 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsEnum,
   IsOptional,
   IsString,
   IsUUID,
   ValidateNested,
 } from 'class-validator';
+
+import { ELessonType } from 'src/common/enums';
 
 export class DtoAnswerEntity {
   @IsUUID()
@@ -31,8 +34,17 @@ export class DtoCreateQuestionBody {
   @Type(() => DtoAnswerEntity)
   answers?: DtoAnswerEntity[];
 
+  @IsOptional()
   @IsUUID()
-  lesson: string;
+  lesson?: string;
+
+  @IsOptional()
+  @IsUUID()
+  assignment?: string;
+
+  @IsOptional()
+  @IsEnum(ELessonType)
+  type?: ELessonType;
 
   @IsOptional()
   @IsString()

@@ -9,7 +9,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { LessonEntity } from 'src/modules/entities/lesson.entity';
+import { AssignmentEntity } from 'src/modules/entities/assignment.entity';
+import { QuestionGroupEntity } from 'src/modules/entities/questionGroup.entity';
 import { TAnswerEntity } from 'src/common/types';
+import { ELessonType } from 'src/common/enums';
 
 @Entity({ name: 'question' })
 export class QuestionEntity extends BaseEntity {
@@ -28,6 +31,20 @@ export class QuestionEntity extends BaseEntity {
   @Column({ nullable: true })
   note: string;
 
+  @Column({
+    nullable: true,
+    type: 'enum',
+    enum: ELessonType,
+    default: ELessonType.MULTIPLE_CHOICE,
+  })
+  type: ELessonType;
+
+  @Column({ nullable: true, type: 'uuid' })
+  sourceQuestionId: string;
+
+  @Column({ nullable: true, type: 'uuid' })
+  parentId: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: string;
 
@@ -40,4 +57,18 @@ export class QuestionEntity extends BaseEntity {
   })
   @JoinColumn({ name: 'lesson' })
   lesson: string;
+
+  @Column('uuid', { nullable: true })
+  @ManyToOne(() => AssignmentEntity, (assignment) => assignment.questions, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'assignment' })
+  assignment: string;
+
+  @Column('uuid', { nullable: true })
+  @ManyToOne(() => QuestionGroupEntity, (group) => group.questions, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'questionGroup' })
+  group: string;
 }

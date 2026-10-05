@@ -48,6 +48,16 @@ export enum ELessonStatus {
   PRIVATE = 'PRIVATE',
 }
 
+export enum EQuestionGroupStatus {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+}
+
+export enum EAssignmentStatus {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+}
+
 export enum ETestStatus {
   PENDING = 'PENDING',
   SUCCESS = 'SUCCESS',
