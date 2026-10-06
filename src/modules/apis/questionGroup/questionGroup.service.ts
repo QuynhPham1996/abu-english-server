@@ -7,12 +7,6 @@ import { parseOrderBy } from 'src/common/helpers/sorter';
 import { DtoCreateQuestionGroupBody } from 'src/modules/apis/questionGroup/dto/create-question-group.dto';
 import { DtoGetQuestionGroupsQuery } from 'src/modules/apis/questionGroup/dto/get-question-groups.dto';
 import { DtoUpdateQuestionGroupBody } from 'src/modules/apis/questionGroup/dto/update-question-group.dto';
-import {
-  matchSearch,
-  paginateStatic,
-  staticBankQuestions,
-  staticQuestionGroups,
-} from 'src/modules/apis/library/library.fixtures';
 import { QuestionGroupRepository } from 'src/modules/repositories/questionGroup.repository';
 import { QuestionRepository } from 'src/modules/repositories/question.repository';
 
@@ -37,25 +31,6 @@ export class QuestionGroupService {
   }
 
   async getQuestionGroups(params: DtoGetQuestionGroupsQuery) {
-    const total = await this.questionGroupRepository.count();
-    if (total === 0) {
-      const filtered = staticQuestionGroups.filter(
-        (item) =>
-          (!params.status || item.status === params.status) &&
-          matchSearch(item.name, params.search),
-      );
-      const dataPaginate = paginateStatic(filtered, params.page, params.pageSize);
-      const totalQuestions = {};
-      dataPaginate.data.forEach((item) => {
-        totalQuestions[item.id] = staticBankQuestions.filter(
-          (question) =>
-            question.group.id === item.id &&
-            (!params.type || question.type === params.type),
-        ).length;
-      });
-      return { ...dataPaginate, totalQuestions };
-    }
-
     const qb = this.questionGroupRepository
       .createQueryBuilder('questionGroup')
       .select([
@@ -104,18 +79,6 @@ export class QuestionGroupService {
   }
 
   async getQuestionGroup(id: string) {
-    const total = await this.questionGroupRepository.count();
-    if (total === 0) {
-      const data = staticQuestionGroups.find((item) => item.id === id);
-      if (!data) {
-        throw new NotFoundException('Không tìm thấy nhóm câu hỏi trong hệ thống.');
-      }
-      const totalQuestions = staticBankQuestions.filter(
-        (question) => question.group.id === id,
-      ).length;
-      return { data, totalQuestions };
-    }
-
     const data = await this.questionGroupRepository
       .createQueryBuilder('questionGroup')
       .select([
@@ -169,12 +132,14 @@ export class QuestionGroupService {
   }
 
   async deleteQuestionGroups(ids: string[]) {
-    if (ids.length > 0) {
-      await this.questionGroupRepository
-        .createQueryBuilder('questionGroup')
-        .delete()
-        .where('questionGroup.id IN (:...ids)', { ids })
-        .execute();
-    }
+    if (ids.length === 0) return;
+
+    await this.questionRepository
+      .createQueryBuilder()
+      .delete()
+      .where('questionGroup IN (:...ids)', { ids })
+      .execute();
+
+    await this.questionGroupRepository.delete(ids);
   }
 }

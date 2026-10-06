@@ -117,14 +117,12 @@ export class QuestionService {
   }
 
   async deleteQuestions(ids: string[]) {
-    if (ids.length > 0) {
-      const idsArray = ids;
+    if (ids.length === 0) return;
 
-      await this.questionRepository
-        .createQueryBuilder('question')
-        .delete()
-        .where('question.id IN (:...ids)', { ids: idsArray })
-        .execute();
-    }
+    await this.questionRepository
+      .createQueryBuilder()
+      .delete()
+      .where('id IN (:...ids) OR parentId IN (:...ids)', { ids })
+      .execute();
   }
 }

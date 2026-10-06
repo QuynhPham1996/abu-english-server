@@ -14,11 +14,6 @@ import {
 } from 'src/modules/apis/questionBank/dto/create-question-bank.dto';
 import { DtoGetQuestionBankQuery } from 'src/modules/apis/questionBank/dto/get-question-bank.dto';
 import { DtoUpdateQuestionBankBody } from 'src/modules/apis/questionBank/dto/update-question-bank.dto';
-import {
-  matchSearch,
-  paginateStatic,
-  staticBankQuestions,
-} from 'src/modules/apis/library/library.fixtures';
 import { QuestionGroupRepository } from 'src/modules/repositories/questionGroup.repository';
 import { QuestionRepository } from 'src/modules/repositories/question.repository';
 
@@ -42,23 +37,6 @@ export class QuestionBankService {
   }
 
   async getQuestions(params: DtoGetQuestionBankQuery) {
-    const total = await this.questionRepository
-      .createQueryBuilder('question')
-      .where('question.group IS NOT NULL')
-      .getCount();
-
-    if (total === 0) {
-      const filtered = staticBankQuestions.filter((item) => {
-        const plainQuestion = item.question.replace(/<[^>]+>/g, '');
-        return (
-          (!params.groupId || item.group.id === params.groupId) &&
-          (!params.type || item.type === params.type) &&
-          matchSearch(plainQuestion, params.search)
-        );
-      });
-      return paginateStatic(filtered, params.page, params.pageSize);
-    }
-
     const qb = this.questionRepository
       .createQueryBuilder('question')
       .leftJoin('question.group', 'questionGroup')
@@ -116,19 +94,6 @@ export class QuestionBankService {
   }
 
   async getQuestion(id: string) {
-    const total = await this.questionRepository
-      .createQueryBuilder('question')
-      .where('question.group IS NOT NULL')
-      .getCount();
-
-    if (total === 0) {
-      const data = staticBankQuestions.find((item) => item.id === id);
-      if (!data) {
-        throw new NotFoundException('Không tìm thấy câu hỏi trong ngân hàng.');
-      }
-      return { data };
-    }
-
     const data = await this.questionRepository
       .createQueryBuilder('question')
       .leftJoin('question.group', 'questionGroup')
@@ -220,13 +185,13 @@ export class QuestionBankService {
   }
 
   async deleteQuestions(ids: string[]) {
-    if (ids.length > 0) {
-      await this.questionRepository
-        .createQueryBuilder('question')
-        .delete()
-        .where('question.id IN (:...ids) OR question.parentId IN (:...ids)', { ids })
-        .execute();
-    }
+    if (ids.length === 0) return;
+
+    await this.questionRepository
+      .createQueryBuilder()
+      .delete()
+      .where('id IN (:...ids) OR parentId IN (:...ids)', { ids })
+      .execute();
   }
 
   private assertChildren(

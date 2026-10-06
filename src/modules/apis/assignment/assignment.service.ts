@@ -13,11 +13,6 @@ import { DtoCreateAssignmentBody } from 'src/modules/apis/assignment/dto/create-
 import { DtoGetAssignmentsQuery } from 'src/modules/apis/assignment/dto/get-assignments.dto';
 import { DtoUpdateAssignmentBody } from 'src/modules/apis/assignment/dto/update-assignment.dto';
 import { DtoUpdateAssignmentQuestionsIndexBody } from 'src/modules/apis/assignment/dto/update-assignment-questions-index.dto';
-import {
-  matchSearch,
-  paginateStatic,
-  staticAssignments,
-} from 'src/modules/apis/library/library.fixtures';
 import { AssignmentRepository } from 'src/modules/repositories/assignment.repository';
 import { QuestionGroupRepository } from 'src/modules/repositories/questionGroup.repository';
 import {
@@ -136,28 +131,6 @@ export class AssignmentService {
   }
 
   async getAssignments(params: DtoGetAssignmentsQuery) {
-    const total = await this.assignmentRepository.count();
-    if (total === 0) {
-      const filtered = staticAssignments.filter(
-        (item) =>
-          (!params.status || item.status === params.status) &&
-          (!params.type || item.type === params.type) &&
-          matchSearch(item.name, params.search),
-      );
-      const dataPaginate = paginateStatic(
-        filtered.map(({ questions, ...item }) => item),
-        params.page,
-        params.pageSize,
-      );
-      const totalQuestions = {};
-      dataPaginate.data.forEach((item) => {
-        totalQuestions[item.id] =
-          staticAssignments.find((assignment) => assignment.id === item.id)
-            ?.questions.length || 0;
-      });
-      return { ...dataPaginate, totalQuestions };
-    }
-
     const qb = this.assignmentRepository
       .createQueryBuilder('assignment')
       .select([
@@ -210,15 +183,6 @@ export class AssignmentService {
   }
 
   async getAssignment(id: string) {
-    const total = await this.assignmentRepository.count();
-    if (total === 0) {
-      const data = staticAssignments.find((item) => item.id === id);
-      if (!data) {
-        throw new NotFoundException('Không tìm thấy bài tập trong hệ thống.');
-      }
-      return { data };
-    }
-
     const data = await this.assignmentRepository
       .createQueryBuilder('assignment')
       .leftJoin('assignment.questions', 'questions')
@@ -280,13 +244,15 @@ export class AssignmentService {
   }
 
   async deleteAssignments(ids: string[]) {
-    if (ids.length > 0) {
-      await this.assignmentRepository
-        .createQueryBuilder('assignment')
-        .delete()
-        .where('assignment.id IN (:...ids)', { ids })
-        .execute();
-    }
+    if (ids.length === 0) return;
+
+    await this.questionRepository
+      .createQueryBuilder()
+      .delete()
+      .where('assignment IN (:...ids)', { ids })
+      .execute();
+
+    await this.assignmentRepository.delete(ids);
   }
 
   async addQuestions(id: string, body: DtoAddAssignmentQuestionsBody) {
